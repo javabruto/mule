@@ -43,6 +43,11 @@
             <artifactId>xapool</artifactId>
             <version>${xaPoolVersion}-osgi</version>
         </dependency>
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-btm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Unit tests -->
         <dependency>
