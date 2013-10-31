@@ -4,6 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
+
 package org.mule.security.oauth;
 
 import org.mule.MessageExchangePattern;
@@ -70,7 +71,7 @@ public class DefaultHttpCallback implements HttpCallback
     /**
      * The dynamically created flow
      */
-    private Flow flowConstruct;
+    private Flow flow;
     /**
      * The message processor to be called upon the http callback
      */
@@ -297,7 +298,7 @@ public class DefaultHttpCallback implements HttpCallback
         this.url = buildUrl();
     }
 
-    public DefaultHttpCallback(List<MessageProcessor> callbackMessageProcessors,
+    public DefaultHttpCallback(MessageProcessor callbackMessageProcessor,
                                MuleContext muleContext,
                                String callbackDomain,
                                Integer localPort,
@@ -307,7 +308,7 @@ public class DefaultHttpCallback implements HttpCallback
                                MessagingExceptionHandler exceptionHandler,
                                Connector connector) throws MuleException
     {
-        this.callbackMessageProcessor = buildChain(callbackMessageProcessors);
+        this.callbackMessageProcessor = callbackMessageProcessor;
         this.muleContext = muleContext;
         this.localPort = localPort;
         this.domain = callbackDomain;
@@ -431,8 +432,8 @@ public class DefaultHttpCallback implements HttpCallback
             this.localUrl = localUrl.replaceFirst(String.valueOf(remotePort), String.valueOf(localPort));
         }
         String dynamicFlowName = String.format("DynamicFlow-%s", localUrl);
-        flowConstruct = new Flow(dynamicFlowName, muleContext);
-        flowConstruct.setMessageSource(createHttpInboundEndpoint());
+        flow = new Flow(dynamicFlowName, muleContext);
+        flow.setMessageSource(createHttpInboundEndpoint());
         MessageProcessor messageProcessor;
         if (callbackFlow != null)
         {
@@ -448,13 +449,13 @@ public class DefaultHttpCallback implements HttpCallback
         }
         List<MessageProcessor> messageProcessors = new ArrayList<MessageProcessor>();
         messageProcessors.add(messageProcessor);
-        flowConstruct.setMessageProcessors(messageProcessors);
+        flow.setMessageProcessors(messageProcessors);
         if (exceptionHandler != null)
         {
-            flowConstruct.setExceptionListener(exceptionHandler);
+            flow.setExceptionListener(exceptionHandler);
         }
-        flowConstruct.initialise();
-        flowConstruct.start();
+        flow.initialise();
+        flow.start();
         LOGGER.debug(String.format("Created flow with http inbound endpoint listening at: %s", url));
     }
 
@@ -463,10 +464,10 @@ public class DefaultHttpCallback implements HttpCallback
      */
     public void stop() throws MuleException
     {
-        if (flowConstruct != null)
+        if (flow != null)
         {
-            flowConstruct.stop();
-            flowConstruct.dispose();
+            flow.stop();
+            flow.dispose();
             LOGGER.debug("Http callback flow stopped");
         }
     }
@@ -488,6 +489,11 @@ public class DefaultHttpCallback implements HttpCallback
             }
         }
         return builder.build();
+    }
+
+    public Flow getFlow()
+    {
+        return flow;
     }
 
     public class FlowRefMessageProcessor implements MessageProcessor
